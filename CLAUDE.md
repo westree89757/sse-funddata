@@ -88,9 +88,9 @@
 ### config.yaml
 ```yaml
 database:
-  host: "127.0.0.1"
+  host: "YOUR_HOST"
   port: 3306
-  username: "root"
+  username: "YOUR_USERNAME"
   password: "YOUR_PASSWORD"
   name: "etf_data"
 
