@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip3 install:*)",
+      "Bash(python3:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://query.sse.com.cn/market/funddata/volumn/queryVolumn.do?jsonCallBack=cb&stockType=8\" -H \"Referer: https://www.sse.com.cn/\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://www.sse.com.cn/market/funddata/volumn/tcuvolumn/\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s \"https://www.sse.com.cn/market/funddata/volumn/tcuvolumn/\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s \"https://www.sse.com.cn/xhtml/js/lib/jquery.min.js\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s \"https://www.sse.com.cn/home/2021public/querySearch/search_fundData_2021.js\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s \"https://www.sse.com.cn/xhtml/js/common/table_config.js?v=V3.7.4\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s \"https://www.sse.com.cn/xhtml/js/common/common_table.js?v=V3.6.1_20250626\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s \"https://www.sse.com.cn/xhtml/js/app/sse_menufun_2021.js\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s \"https://www.sse.com.cn/js/common/ssesuggestfunddata.js?v=20250916\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s \"https://www.sse.com.cn/js/lib/gdp-full.js?v=20250916\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl -s \"https://www.sse.com.cn/xhtml/js/sse_full.js?v=3.7.3_20260330\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(curl:*)",
+      "Bash(grep -oE '\"[A-Z_]{10,}\"')",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 -e \"SELECT 1\")",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 -e \"CREATE DATABASE IF NOT EXISTS etf_data DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\")",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 etf_data)",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 etf_data -e \"SHOW TABLES;\")",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 -e \"SHOW DATABASES;\")",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 etf_data -e ':*)",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 etf_data -e \"SELECT * FROM etf_daily_share LIMIT 3;\")",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 etf_data -e \"SELECT * FROM etf_daily_share; SELECT * FROM etf_daily_summary;\")",
+      "Bash(lsof -ti:5000)",
+      "Bash(xargs kill:*)",
+      "Bash(pkill -f \"web_app.py\")",
+      "Bash(make web:*)",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 etf_data -e \"SELECT * FROM etf_daily_summary ORDER BY stat_date;\")",
+      "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 etf_data -e \"DELETE FROM etf_daily_summary WHERE stat_date = '2026-04-05' AND id = 1;\")",
+      "Bash(git init:*)",
+      "Bash(git config:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沪深300ETF数据</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 头部 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .header .date {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        /* 统计卡片 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .stat-card .label {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-card .unit {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-left: 4px;
+        }
+
+        /* 主图表 */
+        .chart-box {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: #2c3e50;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        /* 表格 */
+        .table-box {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .table {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            border: none;
+            padding: 12px 16px;
+        }
+
+        .table td {
+            border-color: #f0f0f0;
+            padding: 14px 16px;
+            vertical-align: middle;
+        }
+
+        .rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .rank.top { background: #e74c3c; }
+        .rank.second { background: #f39c12; }
+        .rank.third { background: #27ae60; }
+
+        .code {
+            font-family: 'SF Mono', Monaco, monospace;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #95a5a6;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #e74c3c;
+        }
+
+        /* 底部 */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #95a5a6;
+            font-size: 0.8rem;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .stat-card .value { font-size: 1.3rem; }
+            .chart-container { height: 240px; }
+        }
+
+        /* 日期选择器 */
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .date-filter label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .date-filter input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .date-filter input[type="date"]:focus {
+            border-color: #3498db;
+        }
+
+        .date-filter .btn {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .date-filter .btn:hover {
+            background: #2980b9;
+        }
+
+        .date-filter .btn-reset {
+            background: #95a5a6;
+        }
+
+        .date-filter .btn-reset:hover {
+            background: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <h1>沪深300ETF份额追踪</h1>
+            <span class="date" id="updateDate">加载中...</span>
+        </header>
+
+        <!-- 日期选择器 -->
+        <div class="date-filter">
+            <label>开始日期：</label>
+            <input type="date" id="startDate">
+            <label>结束日期：</label>
+            <input type="date" id="endDate">
+            <button class="btn" onclick="loadDataByDateRange()">查询</button>
+            <button class="btn btn-reset" onclick="resetDateRange()">重置</button>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="label">总份额</div>
+                <div class="value"><span id="totalVol">--</span><span class="unit">亿</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="label">ETF数量</div>
+                <div class="value"><span id="etfCount">--</span><span class="unit">只</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="label">华泰柏瑞(510300)</div>
+                <div class="value"><span id="vol510300">--</span><span class="unit">亿</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="label">易方达(510310)</div>
+                <div class="value"><span id="vol510310">--</span><span class="unit">亿</span></div>
+            </div>
+        </div>
+
+        <!-- 柱状图 -->
+        <div class="chart-box">
+            <h3 class="chart-title">各ETF份额对比（单位：亿元）</h3>
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 趋势图 -->
+        <div class="chart-box">
+            <h3 class="chart-title">总份额趋势</h3>
+            <div class="chart-container">
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="table-box">
+            <h3 class="chart-title">各ETF明细</h3>
+            <div class="table-responsive">
+                <table class="table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>代码</th>
+                            <th>名称</th>
+                            <th style="text-align:right">份额（亿）</th>
+                            <th style="text-align:right">占比</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="5" class="loading">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <footer class="footer">
+            数据来源：上海证券交易所（SSE）
+        </footer>
+    </div>
+
+    <script>
+        let barChart, lineChart;
+        let currentDailyData = null; // 当前加载的数据
+        let selectedDate = null; // 当前选中的日期
+
+        // 格式化数字
+        function fmt(num, decimals = 2) {
+            return Number(num).toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // 获取当月1日和今日
+        function getDefaultDates() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const firstDay = `${year}-${month}-01`;
+            const todayStr = today.toISOString().split('T')[0];
+            return { start: firstDay, end: todayStr };
+        }
+
+        // 初始化日期选择器
+        function initDatePicker() {
+            const defaults = getDefaultDates();
+            document.getElementById('startDate').value = defaults.start;
+            document.getElementById('endDate').value = defaults.end;
+        }
+
+        // 重置日期范围为当月
+        function resetDateRange() {
+            selectedDate = null; // 重置选中日期
+            loadData(); // 重新加载当月数据
+        }
+
+        // 按日期范围加载数据
+        async function loadDataByDateRange() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                alert('请选择开始和结束日期');
+                return;
+            }
+
+            if (startDate > endDate) {
+                alert('开始日期不能大于结束日期');
+                return;
+            }
+
+            try {
+                const url = `/api/etf/daily/range?start=${startDate}&end=${endDate}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (!data.success || data.data.length === 0) {
+                    document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="error">该日期范围内无数据</td></tr>';
+                    updateCharts(null);
+                    return;
+                }
+
+                updateCharts(data);
+                currentDailyData = data; // 保存数据供图表点击使用
+                selectedDate = null; // 重置选中日期
+                document.getElementById('updateDate').textContent =
+                    `数据范围：${startDate} 至 ${endDate} (${data.data.length} 条)`;
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="error">数据加载失败</td></tr>';
+            }
+        }
+
+        // 加载数据（默认当月）
+        async function loadData() {
+            const defaults = getDefaultDates();
+            document.getElementById('startDate').value = defaults.start;
+            document.getElementById('endDate').value = defaults.end;
+            await loadDataByDateRange();
+        }
+
+        // 更新图表
+        function updateCharts(data) {
+            if (!data || !data.data || data.data.length === 0) return;
+
+            // 更新统计卡片
+            updateStats(data);
+
+            // 更新表格
+            updateTable(data);
+
+            // 更新柱状图
+            updateBarChart(data);
+
+            // 更新趋势图
+            updateLineChart(data);
+        }
+
+        // 更新统计卡片
+        function updateStats(data) {
+            const total = data.data.reduce((s, i) => s + Number(i.tot_vol), 0) / 10000;
+
+            document.getElementById('totalVol').textContent = fmt(total, 0);
+            document.getElementById('etfCount').textContent = data.etf_count || data.data.length;
+
+            // 填充各ETF数据
+            const latestByCode = {};
+            data.data.forEach(item => {
+                if (!latestByCode[item.sec_code] ||
+                    new Date(item.stat_date) > new Date(latestByCode[item.sec_code].stat_date)) {
+                    latestByCode[item.sec_code] = item;
+                }
+            });
+
+            Object.values(latestByCode).forEach(item => {
+                const el = document.getElementById('vol' + item.sec_code);
+                if (el) {
+                    el.textContent = fmt(Number(item.tot_vol) / 10000, 2);
+                }
+            });
+        }
+
+        // 更新表格
+        function updateTable(data) {
+            if (!data || !data.data || data.data.length === 0) {
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="error">无数据</td></tr>';
+                return;
+            }
+
+            // 获取最新日期的数据（按日期降序，第一条就是最新日期）
+            const sortedData = [...data.data].sort((a, b) => new Date(b.stat_date) - new Date(a.stat_date));
+            const latestDate = sortedData[0].stat_date;
+            const latestData = data.data.filter(i => i.stat_date === latestDate);
+            const total = latestData.reduce((s, i) => s + Number(i.tot_vol), 0);
+
+            let html = '';
+            latestData.sort((a, b) => Number(b.tot_vol) - Number(a.tot_vol)).forEach((item, i) => {
+                const rank = i + 1;
+                const rankClass = rank === 1 ? 'top' : rank === 2 ? 'second' : rank === 3 ? 'third' : '';
+                const pct = (Number(item.tot_vol) / total * 100).toFixed(1);
+
+                html += `
+                    <tr>
+                        <td><span class="rank ${rankClass}">${rank}</span></td>
+                        <td><span class="code">${item.sec_code}</span></td>
+                        <td>${item.fund_name}</td>
+                        <td style="text-align:right">${fmt(Number(item.tot_vol) / 10000, 2)}</td>
+                        <td style="text-align:right">${pct}%</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('tableBody').innerHTML = html;
+        }
+
+        // 更新柱状图（分组柱状图：横轴日期，每组6个ETF柱子）
+        function updateBarChart(dailyData) {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            if (barChart) barChart.destroy();
+
+            if (!dailyData.data || dailyData.data.length === 0) return;
+
+            // 获取所有日期和基金
+            const dates = [...new Set(dailyData.data.map(d => d.stat_date))].sort();
+            const fundNames = [...new Set(dailyData.data.map(d => d.fund_name))];
+
+            // 颜色映射
+            const colors = ['#3498db', '#2ecc71', '#9b59b6', '#f39c12', '#e74c3c', '#1abc9c'];
+            const colorMap = {};
+            fundNames.forEach((name, i) => {
+                colorMap[name] = colors[i % colors.length];
+            });
+
+            // 为每个ETF创建数据集
+            const datasets = fundNames.map(name => {
+                const fundData = dailyData.data.filter(d => d.fund_name === name);
+                const dataByDate = {};
+                fundData.forEach(d => { dataByDate[d.stat_date] = Number(d.tot_vol) / 10000; });
+
+                return {
+                    label: name.replace('沪深300ETF', ''),
+                    data: dates.map(d => dataByDate[d] || 0),
+                    backgroundColor: colorMap[name],
+                    borderWidth: 0,
+                    borderRadius: 3
+                };
+            });
+
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dates.map(d => d.slice(5)), // MM-DD格式
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: handleBarClick,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true, padding: 15 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: v => v + '亿' },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 处理柱状图点击事件
+        function handleBarClick(event, elements) {
+            if (!currentDailyData || !currentDailyData.data) return;
+
+            const dates = [...new Set(currentDailyData.data.map(d => d.stat_date))].sort();
+
+            if (elements.length > 0) {
+                const index = elements[0].index;
+                selectedDate = dates[index];
+
+                // 显示选中日期的表格数据
+                updateTableByDate(selectedDate);
+
+                // 更新标题显示选中日期
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                document.getElementById('updateDate').textContent =
+                    `选中日期：${selectedDate}（点击空白处或"重置"恢复当月数据）`;
+            }
+        }
+
+        // 根据日期更新表格
+        function updateTableByDate(date) {
+            if (!currentDailyData || !currentDailyData.data) return;
+
+            // 筛选该日期的数据
+            const dateData = currentDailyData.data.filter(d => d.stat_date === date);
+            if (dateData.length === 0) return;
+
+            const total = dateData.reduce((s, i) => s + Number(i.tot_vol), 0);
+
+            let html = '';
+            dateData.sort((a, b) => Number(b.tot_vol) - Number(a.tot_vol)).forEach((item, i) => {
+                const rank = i + 1;
+                const rankClass = rank === 1 ? 'top' : rank === 2 ? 'second' : rank === 3 ? 'third' : '';
+                const pct = (Number(item.tot_vol) / total * 100).toFixed(1);
+
+                html += `
+                    <tr>
+                        <td><span class="rank ${rankClass}">${rank}</span></td>
+                        <td><span class="code">${item.sec_code}</span></td>
+                        <td>${item.fund_name}</td>
+                        <td style="text-align:right">${fmt(Number(item.tot_vol) / 10000, 2)}</td>
+                        <td style="text-align:right">${pct}%</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('tableBody').innerHTML = html;
+        }
+
+        // 更新折线图（历史趋势）
+        function updateLineChart(data) {
+            const ctx = document.getElementById('lineChart').getContext('2d');
+            if (lineChart) lineChart.destroy();
+
+            if (!data.data || data.data.length === 0) return;
+
+            // 按日期汇总
+            const dateGroups = {};
+            data.data.forEach(item => {
+                const d = item.stat_date;
+                if (!dateGroups[d]) dateGroups[d] = 0;
+                dateGroups[d] += Number(item.tot_vol);
+            });
+
+            const dates = Object.keys(dateGroups).sort();
+            const values = dates.map(d => dateGroups[d] / 10000);
+
+            lineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates.map(d => d.slice(5)),
+                    datasets: [{
+                        label: '总份额',
+                        data: values,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: { callback: v => v + '亿' },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

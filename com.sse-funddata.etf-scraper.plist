@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sse-funddata.etf-scraper</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/west/agi/claude-code/sse-funddata/etf_scraper.py</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/west/agi/claude-code/sse-funddata</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/west/agi/claude-code/sse-funddata/logs/etf_scraper.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/west/agi/claude-code/sse-funddata/logs/etf_scraper.error.log</string>
+
+    <!-- 每天早上 9:00 执行 -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- 如果错过执行时间（如电脑关机），下次启动时补执行 -->
+    <key>StartIfMounted</key>
+    <true/>
+
+    <!-- 保持运行 -->
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>

@@ -1,0 +1,35 @@
+# 数据库配置
+database:
+  host: "127.0.0.1"
+  port: 3306
+  username: "root"
+  password: "12345678"
+  name: "etf_data"
+
+# ETF目标列表
+etf_targets:
+  - code: "510300"
+    name: "沪深300ETF华泰柏瑞"
+  - code: "510310"
+    name: "沪深300ETF易方达"
+  - code: "510320"
+    name: "沪深300ETF中金"
+  - code: "510330"
+    name: "沪深300ETF华夏"
+  - code: "510350"
+    name: "沪深300ETF工银"
+  - code: "510360"
+    name: "沪深300ETF广发"
+
+# API配置
+api:
+  base_url: "https://query.sse.com.cn/commonQuery.do"
+  sql_id: "COMMON_SSE_ZQPZ_ETFZL_XXPL_ETFGM_SEARCH_L"
+  headers:
+    Referer: "https://www.sse.com.cn/"
+    User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+# 输出配置
+output:
+  data_dir: "./data"
+  output_dir: "./output"
