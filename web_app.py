@@ -4,7 +4,7 @@
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 
 from flask import Flask, render_template, jsonify, request
@@ -235,10 +235,89 @@ def serve_js(filename):
 
 # ==================== 启动 ====================
 
+def get_latest_date_in_db():
+    """获取数据库中最新日期"""
+    try:
+        sql = text("SELECT MAX(stat_date) as max_date FROM etf_daily_share")
+        with engine.connect() as conn:
+            result = conn.execute(sql)
+            row = result.fetchone()
+            return row[0] if row and row[0] else None
+    except:
+        return None
+
+
+def auto_fetch_data():
+    """自动获取最新数据"""
+    from etf300_date_range_scraper import ETFScraper, ETFDatabase
+
+    config = load_config()
+    db = ETFDatabase(config)
+    scraper = ETFScraper(config)
+
+    latest_date = get_latest_date_in_db()
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    if latest_date is None:
+        print("[提示] 数据库无数据，跳过自动获取")
+        return
+
+    latest_str = latest_date.strftime("%Y-%m-%d") if hasattr(latest_date, 'strftime') else str(latest_date)
+    # 从最新日期的下一天开始
+    start_date = (datetime.strptime(latest_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+    days_gap = (datetime.now() - datetime.strptime(latest_str, "%Y-%m-%d")).days
+
+    print(f"[自动获取] 数据库最新日期: {latest_str}, 距今天数: {days_gap}天")
+
+    if days_gap > 90:
+        print("[自动获取] 间隔超过90天，跳过自动获取")
+        return
+
+    if days_gap <= 0:
+        print("[自动获取] 数据已是最新，无需获取")
+        return
+
+    print(f"[自动获取] 开始获取 {start_date} 到 {today} 的数据...")
+    all_data = []
+    current = datetime.strptime(start_date, "%Y-%m-%d")
+    end = datetime.strptime(today, "%Y-%m-%d")
+
+    while current <= end:
+        date_str = current.strftime("%Y-%m-%d")
+        print(f"[自动获取] 抓取 {date_str}...", end=" ")
+
+        df = scraper.fetch_data_by_date(date_str)
+        if df is not None and not df.empty:
+            all_data.append(df)
+            print(f"成功 ({len(df)} 条)")
+        else:
+            print("无数据（节假日），跳过")
+
+        current += timedelta(days=1)
+        import time as time_module
+        time_module.sleep(0.5)
+
+    if not all_data:
+        print("[自动获取] 没有抓取到任何数据，跳过")
+        return
+
+    df = pd.concat(all_data, ignore_index=True)
+    print(f"[自动获取] 共抓取 {len(df)} 条数据，保存到数据库...")
+    saved_count = 0
+    for date in df['stat_date'].unique():
+        date_df = df[df['stat_date'] == date]
+        if db.save_data(date_df, date):
+            saved_count += 1
+    print(f"[自动获取] 已保存 {saved_count} 天的数据")
+
+
 if __name__ == '__main__':
     print("=" * 60)
     print("沪深300ETF数据展示平台")
     print("=" * 60)
+
+    auto_fetch_data()
+
     print(f"访问地址: http://127.0.0.1:5001")
     print("按 Ctrl+C 停止服务")
     print("=" * 60)
