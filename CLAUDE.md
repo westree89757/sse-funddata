@@ -91,7 +91,7 @@ database:
   host: "127.0.0.1"
   port: 3306
   username: "root"
-  password: "12345678"
+  password: "YOUR_PASSWORD"
   name: "etf_data"
 
 etf_targets:
@@ -292,7 +292,7 @@ python3 -m pytest tests/test_database.py -v
 2. 修改 `database/schema.sql` 中的初始数据
 3. 重新初始化数据库：
 ```bash
-mysql -h 127.0.0.1 -u root -p12345678 etf_data < database/schema.sql
+mysql -h 127.0.0.1 -u root -pYOUR_PASSWORD etf_data < database/schema.sql
 ```
 
 ### 添加新的数据字段
