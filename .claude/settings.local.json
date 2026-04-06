@@ -32,7 +32,11 @@
       "Bash(mysql -h 127.0.0.1 -P 3306 -u root -p12345678 etf_data -e \"DELETE FROM etf_daily_summary WHERE stat_date = '2026-04-05' AND id = 1;\")",
       "Bash(git init:*)",
       "Bash(git config:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
