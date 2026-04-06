@@ -40,3 +40,4 @@ htmlcov/
 
 # Virtual environments
 .env
+.claude/
