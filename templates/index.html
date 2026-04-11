@@ -276,7 +276,7 @@
 
         <!-- 趋势图 -->
         <div class="chart-box">
-            <h3 class="chart-title">总份额趋势</h3>
+            <h3 class="chart-title">总份额与上证指数成交额趋势</h3>
             <div class="chart-container">
                 <canvas id="lineChart"></canvas>
             </div>
@@ -358,9 +358,14 @@
             }
 
             try {
-                const url = `/api/etf/daily/range?start=${startDate}&end=${endDate}`;
-                const res = await fetch(url);
-                const data = await res.json();
+                // 并行请求ETF数据和指数数据
+                const [etfRes, indexRes] = await Promise.all([
+                    fetch(`/api/etf/daily/range?start=${startDate}&end=${endDate}`),
+                    fetch(`/api/index/summary?days=365`)
+                ]);
+
+                const data = await etfRes.json();
+                const indexData = await indexRes.json();
 
                 if (!data.success || data.data.length === 0) {
                     document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="error">该日期范围内无数据</td></tr>';
@@ -368,7 +373,7 @@
                     return;
                 }
 
-                updateCharts(data);
+                updateCharts(data, indexData);
                 currentDailyData = data; // 保存数据供图表点击使用
                 selectedDate = null; // 重置选中日期
                 document.getElementById('updateDate').textContent =
@@ -389,7 +394,7 @@
         }
 
         // 更新图表
-        function updateCharts(data) {
+        function updateCharts(data, indexData) {
             if (!data || !data.data || data.data.length === 0) return;
 
             // 更新统计卡片
@@ -402,7 +407,7 @@
             updateBarChart(data);
 
             // 更新趋势图
-            updateLineChart(data);
+            updateLineChart(data, indexData);
         }
 
         // 更新统计卡片
@@ -576,14 +581,14 @@
             document.getElementById('tableBody').innerHTML = html;
         }
 
-        // 更新折线图（历史趋势）
-        function updateLineChart(data) {
+        // 更新折线图（历史趋势 - 双Y轴：ETF总份额 + 上证指数成交额）
+        function updateLineChart(data, indexData) {
             const ctx = document.getElementById('lineChart').getContext('2d');
             if (lineChart) lineChart.destroy();
 
             if (!data.data || data.data.length === 0) return;
 
-            // 按日期汇总
+            // 按日期汇总ETF总份额
             const dateGroups = {};
             data.data.forEach(item => {
                 const d = item.stat_date;
@@ -591,34 +596,93 @@
                 dateGroups[d] += Number(item.tot_vol);
             });
 
-            const dates = Object.keys(dateGroups).sort();
-            const values = dates.map(d => dateGroups[d] / 10000);
+            const etfDates = Object.keys(dateGroups).sort();
+            const etfValues = etfDates.map(d => dateGroups[d] / 10000);
+
+            // 处理指数数据
+            let indexValues = [];
+            if (indexData && indexData.success && indexData.data) {
+                const indexByDate = {};
+                indexData.data.forEach(item => {
+                    indexByDate[item.stat_date] = Number(item.total_amount) / 10000; // 转换为亿元
+                });
+                indexValues = etfDates.map(d => indexByDate[d] || null);
+            }
+
+            // 构建数据集
+            const datasets = [{
+                label: 'ETF总份额',
+                data: etfValues,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: '#3498db',
+                yAxisID: 'y'
+            }];
+
+            // 如果有指数数据，添加第二条线
+            if (indexValues.length > 0 && indexValues.some(v => v !== null)) {
+                datasets.push({
+                    label: '上证指数成交额',
+                    data: indexValues,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#e74c3c',
+                    yAxisID: 'y1'
+                });
+            }
 
             lineChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: dates.map(d => d.slice(5)),
-                    datasets: [{
-                        label: '总份额',
-                        data: values,
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#3498db'
-                    }]
+                    labels: etfDates.map(d => d.slice(5)),
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    onClick: handleBarClick,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true, padding: 15 }
+                        }
+                    },
                     scales: {
                         y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'ETF总份额 (亿元)'
+                            },
                             beginAtZero: false,
                             ticks: { callback: v => v + '亿' },
                             grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '上证指数成交额 (亿元)'
+                            },
+                            beginAtZero: true,
+                            ticks: { callback: v => v + '亿' },
+                            grid: { drawOnChartArea: false }
                         },
                         x: { grid: { display: false } }
                     }
