@@ -51,7 +51,20 @@ CREATE TABLE IF NOT EXISTS etf_daily_summary (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ETF每日汇总表';
 
 -- ============================================
--- 4. 数据采集日志表
+-- 4. 指数每日汇总表（上证指数）
+-- ============================================
+CREATE TABLE IF NOT EXISTS index_daily_summary (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    stat_date DATE NOT NULL UNIQUE COMMENT '统计日期',
+    index_code VARCHAR(10) NOT NULL DEFAULT '000001' COMMENT '指数代码',
+    index_name VARCHAR(50) NOT NULL DEFAULT '上证指数' COMMENT '指数名称',
+    total_amount DECIMAL(20,2) NOT NULL COMMENT '成交额(万元)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_stat_date (stat_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='指数每日汇总表';
+
+-- ============================================
+-- 5. 数据采集日志表
 -- ============================================
 CREATE TABLE IF NOT EXISTS etf_fetch_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
