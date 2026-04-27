@@ -6,6 +6,8 @@
     <title>沪深300ETF数据</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <style>
         * { box-sizing: border-box; }
 
@@ -319,14 +321,17 @@
             return Number(num).toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
-        // 获取当月1日和今日
+        // 获取3个月前到今日
         function getDefaultDates() {
             const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const firstDay = `${year}-${month}-01`;
             const todayStr = today.toISOString().split('T')[0];
-            return { start: firstDay, end: todayStr };
+            const threeMonthsAgo = new Date(today);
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            const year = threeMonthsAgo.getFullYear();
+            const month = String(threeMonthsAgo.getMonth() + 1).padStart(2, '0');
+            const day = String(threeMonthsAgo.getDate()).padStart(2, '0');
+            const threeMonthsAgoStr = `${year}-${month}-${day}`;
+            return { start: threeMonthsAgoStr, end: todayStr };
         }
 
         // 初始化日期选择器
@@ -657,6 +662,12 @@
                         legend: {
                             position: 'bottom',
                             labels: { usePointStyle: true, padding: 15 }
+                        },
+                        zoom: {
+                            pan: {
+                                enabled: true,
+                                mode: 'x'
+                            }
                         }
                     },
                     scales: {
